@@ -4,6 +4,10 @@
 
 ---
 
+<p align="center">
+  <img src="docs/assets/hero_light.png" alt="Atlas-M30 Hero Image">
+</p>
+
 ## What Is This?
 
 Atlas-M30 is a complete, open-source guide and config kit for running a persistent server on an Android phone using [Termux](https://termux.dev). Clone this repo, copy the configs to your device, and you'll have a production-ready setup in under an hour.
