@@ -168,4 +168,4 @@ Every config file in this repo maps to a specific location on your Termux device
 
 ## License
 
-This project is provided as-is for educational and personal use.
+This project is provided as-is for educational and personal use. This is under MIT License.
