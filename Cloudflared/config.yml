@@ -1,0 +1,14 @@
+# Cloudflare Tunnel - Locally Managed Configuration
+# Used with Option B (named tunnel). Not needed if using token-based tunnels.
+#
+# Replace these placeholders before use:
+#   YOUR_TUNNEL_ID    → UUID from `cloudflared tunnel create atlas-m30`
+#   example.com       → Your Cloudflare-managed domain
+
+tunnel: YOUR_TUNNEL_ID
+credentials-file: /data/data/com.termux/files/home/.cloudflared/YOUR_TUNNEL_ID.json
+
+ingress:
+  - hostname: atlasm30s.example.com
+    service: http://localhost:8080
+  - service: http_status:404

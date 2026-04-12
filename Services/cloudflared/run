@@ -1,0 +1,12 @@
+#!/data/data/com.termux/files/usr/bin/sh
+
+# Cloudflared runit service run script.
+# Uses exec to replace the shell process — required by runit for proper supervision.
+# If CLOUDFLARED_TOKEN is set, runs in token mode (remotely managed tunnel).
+# Otherwise, falls back to locally-managed tunnel using ~/.cloudflared/config.yml.
+
+if [ -n "$CLOUDFLARED_TOKEN" ]; then
+    exec cloudflared tunnel run --token "$CLOUDFLARED_TOKEN"
+fi
+
+exec cloudflared tunnel run

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Atlas-M30 Android server setup guide. Base UI walkthrough for Termux, OpenSSH, Tailscale, and Wakelock. Full production replication (Nginx + Cloudflared + services) is in docs/REPLICATION_GUIDE.md.">
+    <title>Atlas-M30 - Android Server Setup Guide</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Theme transition overlay -->
+    <div class="theme-overlay" id="themeOverlay" aria-hidden="true"></div>
+
+    <!-- Dot grid background -->
+    <div class="dot-grid" aria-hidden="true"></div>
+
+    <!-- Navigation -->
+    <nav class="nav" id="nav">
+        <div class="nav-inner">
+            <a href="#" class="nav-logo">
+                <span class="logo-dot"></span>
+                pocket.server
+            </a>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle light/dark mode" title="Toggle theme">
+                <span class="toggle-track">
+                    <span class="toggle-thumb">
+                        <!-- Sun icon -->
+                        <svg class="icon-sun" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        <!-- Moon icon -->
+                        <svg class="icon-moon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </span>
+                </span>
+            </button>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Hero -->
+        <section class="hero" id="hero">
+            <div class="hero-inner">
+                <div class="hero-badge">
+                    <span class="pulse-dot"></span>
+                    SYSTEM ONLINE
+                </div>
+                <h1 class="hero-title">Your phone<br>is a server.</h1>
+                <p class="hero-subtitle">A minimal guide to transforming any Android device into a headless, secure, always-on server using open-source tools.</p>
+                <div class="hero-stack">
+                    <span class="stack-tag">Termux</span>
+                    <span class="stack-tag">OpenSSH</span>
+                    <span class="stack-tag">Tailscale</span>
+                    <span class="stack-tag">Wakelock</span>
+                    <span class="stack-tag">Nginx</span>
+                    <span class="stack-tag">Cloudflared</span>
+                </div>
+                <p class="hero-subtitle" style="margin-top: 1rem; font-size: 0.95rem;">
+                    Full reproducible infrastructure guide is in <strong>docs/REPLICATION_GUIDE.md</strong> in this repository.
+                </p>
+                <a href="#steps" class="hero-cta">
+                    Begin Setup
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                </a>
+            </div>
+        </section>
+
+        <!-- Prerequisites -->
+        <section class="prereq-section" id="prereqs">
+            <div class="section-inner">
+                <div class="section-label">Before you begin</div>
+                <h2 class="section-title">Prerequisites</h2>
+                <div class="prereq-grid">
+                    <div class="prereq-card reveal">
+                        <div class="prereq-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                        </div>
+                        <h3>Android Device</h3>
+                        <p>Any Android phone or tablet running Android 7.0+. An old phone works perfectly.</p>
+                    </div>
+                    <div class="prereq-card reveal">
+                        <div class="prereq-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+                        </div>
+                        <h3>Termux from F-Droid</h3>
+                        <p>Install Termux from <strong>F-Droid only</strong>. The Play Store version is deprecated and will not work.</p>
+                    </div>
+                    <div class="prereq-card reveal">
+                        <div class="prereq-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        </div>
+                        <h3>Tailscale Account</h3>
+                        <p>Create a free account at <strong>tailscale.com</strong>. Install the official Tailscale Android app.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Steps -->
+        <section class="steps-section" id="steps">
+            <div class="section-inner">
+                <div class="section-label">Step-by-step</div>
+                <h2 class="section-title">Setup Guide</h2>
+
+                <!-- Step 1 -->
+                <article class="step-card reveal" id="step-1">
+                    <div class="step-header">
+                        <span class="step-num">01</span>
+                        <h3>Update Termux</h3>
+                    </div>
+                    <p class="step-desc">Open Termux and update all packages to their latest versions. This ensures you have the most recent tools and security patches.</p>
+                    <div class="code-block">
+                        <div class="code-bar">
+                            <div class="code-dots">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <span class="code-lang">bash</span>
+                            <button class="copy-btn" aria-label="Copy code">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <span class="copy-label">Copy</span>
+                            </button>
+                        </div>
+                        <pre><code>pkg update && pkg upgrade -y</code></pre>
+                    </div>
+                    <div class="step-note">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        Press <strong>y</strong> if prompted to confirm any configuration changes during the upgrade.
+                    </div>
+                </article>
+
+                <!-- Step 2 -->
+                <article class="step-card reveal" id="step-2">
+                    <div class="step-header">
+                        <span class="step-num">02</span>
+                        <h3>Install OpenSSH</h3>
+                    </div>
+                    <p class="step-desc">Install the OpenSSH package to enable secure remote shell access. Termux's SSH server runs on port <strong>8022</strong> by default (not the standard port 22).</p>
+                    <div class="code-block">
+                        <div class="code-bar">
+                            <div class="code-dots">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <span class="code-lang">bash</span>
+                            <button class="copy-btn" aria-label="Copy code">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <span class="copy-label">Copy</span>
+                            </button>
+                        </div>
+                        <pre><code># Install OpenSSH
+pkg install openssh -y
+
+# Set a password for SSH login
+passwd
+
+# Start the SSH daemon
+sshd
+
+# Check your username (you'll need this to connect)
+whoami</code></pre>
+                    </div>
+                    <div class="step-note">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        Your Termux username is typically something like <strong>u0_a123</strong>. Note it down.
+                    </div>
+                </article>
+
+                <!-- Step 3 -->
+                <article class="step-card reveal" id="step-3">
+                    <div class="step-header">
+                        <span class="step-num">03</span>
+                        <h3>Acquire Wakelock</h3>
+                    </div>
+                    <p class="step-desc">Android aggressively kills background processes. Acquire a wakelock to prevent the CPU from sleeping and keep your server available 24/7.</p>
+                    <div class="code-block">
+                        <div class="code-bar">
+                            <div class="code-dots">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <span class="code-lang">bash</span>
+                            <button class="copy-btn" aria-label="Copy code">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <span class="copy-label">Copy</span>
+                            </button>
+                        </div>
+                        <pre><code># Acquire wakelock (keeps CPU active)
+termux-wake-lock
+
+# To release it later:
+# termux-wake-unlock</code></pre>
+                    </div>
+                    <div class="step-note warning">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        Also go to <strong>Settings → Apps → Termux → Battery</strong> and set it to <strong>"Unrestricted"</strong> to prevent Android from killing the app.
+                    </div>
+                </article>
+
+                <!-- Step 4 -->
+                <article class="step-card reveal" id="step-4">
+                    <div class="step-header">
+                        <span class="step-num">04</span>
+                        <h3>Connect via Tailscale</h3>
+                    </div>
+                    <p class="step-desc">Install the official Tailscale Android app from the Play Store and enable it. This creates a secure mesh VPN — no port forwarding needed. Your phone gets a stable private IP accessible from any device on your Tailscale network.</p>
+                    <div class="code-block">
+                        <div class="code-bar">
+                            <div class="code-dots">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <span class="code-lang">bash</span>
+                            <button class="copy-btn" aria-label="Copy code">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <span class="copy-label">Copy</span>
+                            </button>
+                        </div>
+                        <pre><code># From your remote machine, connect:
+ssh -p 8022 your_username@your-tailscale-ip
+
+# Example:
+# ssh -p 8022 u0_a123@100.64.0.2</code></pre>
+                    </div>
+                    <div class="step-note">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        Find your Tailscale IP in the Tailscale app or at <strong>login.tailscale.com/admin/machines</strong>.
+                    </div>
+                </article>
+
+                <!-- Step 5 -->
+                <article class="step-card reveal" id="step-5">
+                    <div class="step-header">
+                        <span class="step-num">05</span>
+                        <h3>Auto-start on Boot</h3>
+                    </div>
+                    <p class="step-desc">Install <strong>Termux:Boot</strong> from F-Droid to automatically start your services when the device reboots. Open the Termux:Boot app once after installing to grant permissions.</p>
+                    <div class="code-block">
+                        <div class="code-bar">
+                            <div class="code-dots">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <span class="code-lang">bash</span>
+                            <button class="copy-btn" aria-label="Copy code">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <span class="copy-label">Copy</span>
+                            </button>
+                        </div>
+                        <pre><code># Create boot directory
+mkdir -p ~/.termux/boot
+
+# Create startup script
+cat > ~/.termux/boot/start-server.sh << 'EOF'
+#!/data/data/com.termux/files/usr/bin/sh
+termux-wake-lock
+sshd
+EOF
+
+# Make it executable
+chmod 700 ~/.termux/boot/start-server.sh</code></pre>
+                    </div>
+                    <div class="step-note warning">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        Install both Termux and Termux:Boot from <strong>F-Droid only</strong>. Mixing sources (Play Store + F-Droid) will fail due to mismatched signing keys.
+                    </div>
+                </article>
+
+            </div>
+        </section>
+
+        <!-- Connection Reference -->
+        <section class="ref-section" id="reference">
+            <div class="section-inner">
+                <div class="section-label">Quick reference</div>
+                <h2 class="section-title">Connection Cheatsheet</h2>
+                <div class="ref-grid">
+                    <div class="ref-item reveal">
+                        <span class="ref-key">SSH Port</span>
+                        <span class="ref-val">8022</span>
+                    </div>
+                    <div class="ref-item reveal">
+                        <span class="ref-key">Username</span>
+                        <span class="ref-val mono">whoami</span>
+                    </div>
+                    <div class="ref-item reveal">
+                        <span class="ref-key">Tailscale IP</span>
+                        <span class="ref-val mono">100.x.x.x</span>
+                    </div>
+                    <div class="ref-item reveal">
+                        <span class="ref-key">Start SSH</span>
+                        <span class="ref-val mono">sshd</span>
+                    </div>
+                    <div class="ref-item reveal">
+                        <span class="ref-key">Stop SSH</span>
+                        <span class="ref-val mono">pkill sshd</span>
+                    </div>
+                    <div class="ref-item reveal">
+                        <span class="ref-key">Wakelock</span>
+                        <span class="ref-val mono">termux-wake-lock</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-status">
+                <span class="pulse-dot"></span>
+                All systems nominal
+            </div>
+            <div class="footer-links">
+                <a href="https://f-droid.org/packages/com.termux/" target="_blank" rel="noopener noreferrer">Termux</a>
+                <a href="https://tailscale.com" target="_blank" rel="noopener noreferrer">Tailscale</a>
+                <a href="https://wiki.termux.com/wiki/Remote_Access" target="_blank" rel="noopener noreferrer">Docs</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast -->
+    <div class="toast" id="toast" role="alert" aria-live="polite">Copied to clipboard</div>
+
+    <script src="script.js"></script>
+</body>
+</html>

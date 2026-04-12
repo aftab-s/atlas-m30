@@ -1,0 +1,15 @@
+# SSH Client Config Template for Atlas-M30
+# Install location: ~/.ssh/config (on your COMPUTER, not on the phone)
+#
+# Replace:
+#   REPLACE_WITH_TERMUX_USERNAME → output of `whoami` in Termux (e.g., u0_a123)
+#   100.64.0.2                   → your phone's Tailscale IP
+#
+# After setup: ssh atlas-m30
+
+Host atlas-m30
+    HostName 100.64.0.2
+    Port 8022
+    User REPLACE_WITH_TERMUX_USERNAME
+    ServerAliveInterval 30
+    ServerAliveCountMax 3
