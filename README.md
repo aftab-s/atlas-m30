@@ -15,7 +15,7 @@ Atlas-M30 is a complete, open-source guide and config kit for running a persiste
 ### Architecture
 
 <p align="center">
-  <img src="docs/assets/architecture.png" alt="Atlas-M30 Architecture Diagram" width="700">
+  <img src="docs/assets/Atlas-M30 Architecture.jpg" alt="Atlas-M30 Architecture Diagram">
 </p>
 
 ### The Stack
